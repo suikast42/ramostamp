@@ -1,0 +1,10 @@
+{
+  "startid" : 0,
+  "userid": "42",
+  "from":  "2022-08-01",
+  "until": "2022-08-31",
+  "dailyBegin": "08:00.00",
+  "dailyEnd": "20:00.00",
+  "beginDeltaS": 1800,
+  "endDeltaS": 1800
+}
