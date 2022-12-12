@@ -128,7 +128,7 @@ func (cfg *Configuration) validate() error {
 	return nil
 }
 
-func (cfg *Configuration) Generate(writer io.Writer) error {
+func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	err := cfg.validate()
 	if err != nil {
 		return err
@@ -171,7 +171,11 @@ func (cfg *Configuration) Generate(writer io.Writer) error {
 			fromDate.Format("15:04.05 MST"),
 			untilDate.Format("15:04.05 MST"))
 		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
-		_, err := writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
+		if withComment {
+			_, err = writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
+		} else {
+			_, err = writer.Write([]byte(fmt.Sprintf("%s\n", statement)))
+		}
 		if err != nil {
 			return err
 		}
@@ -186,7 +190,7 @@ func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64
 
 	worktime := fmt.Sprintf("%s", fmtDuration(sub))
 	//time.Date(2023, 01, 01, sub.Hours(), sub.Minutes(), 0, 0, time.UTC)
-	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', 470, 0, 5, 'Arbeitszeit', 0, 0, 1, 0, 0)",
+	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', 1, 0, 1, 'Arbeitszeit', 0, 0, 1, 0, 0)",
 		rowId,           // ID
 		fromEpoch,       // crdate
 		untilEpoch,      // modified

@@ -33,10 +33,11 @@ func main() {
 	log.Info().Msgf("Configuration:\n%v", configuration.ToJson())
 
 	var out = flag.String("out", "stdout", "Write the generated output to file instead of stdout")
+	withComment := flag.Bool("comment", false, "Generate with comment")
 	flag.Parse()
 
 	if "stdout" == *out {
-		err = configuration.Generate(os.Stderr)
+		err = configuration.Generate(os.Stderr, *withComment)
 	} else {
 		f, err := os.Create(*out)
 		if err != nil {
@@ -44,7 +45,7 @@ func main() {
 			os.Exit(1)
 		}
 		writer := bufio.NewWriter(f)
-		configuration.Generate(writer)
+		configuration.Generate(writer, *withComment)
 		writer.Flush()
 		log.Info().Msgf("Output wrote to %s", *out)
 	}
