@@ -166,12 +166,12 @@ func (cfg *Configuration) Generate(writer io.Writer) error {
 
 		fromDate := toTime(dayCounter, fromHour)
 		untilDate := toTime(dayCounter, untilHour)
-		//writer.Write([]byte(fmt.Sprintf("Day: %v: from: %v until:%v\n",
-		//	dayCounter.Format("2006-01-02 Monday"),
-		//	fromDate.Unix(),
-		//	untilDate.Unix())))
+		comment := fmt.Sprintf("Day: %v: from: %v until:%v",
+			dayCounter.Format("2006-01-02 Monday"),
+			fromDate.Format("15:04.05 MST"),
+			untilDate.Format("15:04.05 MST"))
 		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
-		_, err := writer.Write([]byte(fmt.Sprintf("%s\n", statement)))
+		_, err := writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
 		if err != nil {
 			return err
 		}

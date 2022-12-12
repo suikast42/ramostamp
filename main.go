@@ -38,7 +38,6 @@ func main() {
 	if "stdout" == *out {
 		err = configuration.Generate(os.Stderr)
 	} else {
-
 		f, err := os.Create(*out)
 		if err != nil {
 			log.Err(err).Msgf("Can't create file %s", *out)
@@ -47,6 +46,7 @@ func main() {
 		writer := bufio.NewWriter(f)
 		configuration.Generate(writer)
 		writer.Flush()
+		log.Info().Msgf("Output wrote to %s", *out)
 	}
 	if err != nil {
 		log.Error().Msgf("Error in generation process:\n%s", err.Error())
