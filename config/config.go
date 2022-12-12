@@ -170,7 +170,7 @@ func (cfg *Configuration) Generate(writer io.Writer) error {
 		//	dayCounter.Format("2006-01-02 Monday"),
 		//	fromDate.Unix(),
 		//	untilDate.Unix())))
-		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix())
+		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
 		_, err := writer.Write([]byte(fmt.Sprintf("%s\n", statement)))
 		if err != nil {
 			return err
@@ -180,13 +180,13 @@ func (cfg *Configuration) Generate(writer io.Writer) error {
 	return nil
 }
 
-func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64, epochCurrentDay int64) string {
+func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64, epochCurrentDay int64, lastStatement bool) string {
 
 	sub := time.Unix(untilEpoch, 0).Sub(time.Unix(fromEpoch, 0))
 
 	worktime := fmt.Sprintf("%s", fmtDuration(sub))
 	//time.Date(2023, 01, 01, sub.Hours(), sub.Minutes(), 0, 0, time.UTC)
-	return fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', 470, 0, 5, 'Arbeitszeit', 0, 0, 1, 0, 0);",
+	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', 470, 0, 5, 'Arbeitszeit', 0, 0, 1, 0, 0)",
 		rowId,           // ID
 		fromEpoch,       // crdate
 		untilEpoch,      // modified
@@ -196,6 +196,12 @@ func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64
 		untilEpoch,      // endtime
 		worktime,
 	)
+
+	if lastStatement {
+		return sprintf + ";"
+	} else {
+		return sprintf + ","
+	}
 }
 func toTime(theDay time.Time, theHour time.Time) time.Time {
 	date := time.Date(theDay.Year(), theDay.Month(), theDay.Day(), theHour.Hour(), theHour.Minute(), theHour.Second(), theHour.Nanosecond(), time.UTC)

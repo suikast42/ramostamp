@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -29,7 +31,23 @@ func main() {
 	}
 
 	log.Info().Msgf("Configuration:\n%v", configuration.ToJson())
-	err = configuration.Generate(os.Stderr)
+
+	var out = flag.String("out", "stdout", "Write the generated output to file instead of stdout")
+	flag.Parse()
+
+	if "stdout" == *out {
+		err = configuration.Generate(os.Stderr)
+	} else {
+
+		f, err := os.Create(*out)
+		if err != nil {
+			log.Err(err).Msgf("Can't create file %s", *out)
+			os.Exit(1)
+		}
+		writer := bufio.NewWriter(f)
+		configuration.Generate(writer)
+		writer.Flush()
+	}
 	if err != nil {
 		log.Error().Msgf("Error in generation process:\n%s", err.Error())
 	}
