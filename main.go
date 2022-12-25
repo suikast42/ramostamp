@@ -33,7 +33,7 @@ func main() {
 	log.Info().Msgf("Configuration:\n%v", configuration.ToJson())
 
 	var out = flag.String("out", "stdout", "Write the generated output to file instead of stdout")
-	withComment := flag.Bool("comment", false, "Generate with comment")
+	withComment := flag.Bool("comment", true, "Generate with comment")
 	flag.Parse()
 
 	if "stdout" == *out {

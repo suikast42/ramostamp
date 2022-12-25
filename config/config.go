@@ -148,13 +148,13 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	for i := 0; i <= sub; i++ {
 		rowId := cfg.StartId + i
 		dayCounter = dayCounter.Add(time.Hour * 24)
-		if dayCounter.Weekday() == time.Saturday ||
-			dayCounter.Weekday() == time.Sunday {
+		if dayCounter.Weekday() == time.Friday ||
+			dayCounter.Weekday() == time.Saturday {
 			continue
 		}
 		beginOffset := time.Duration(rand.Int31n(cfg.BeginDeltaS))
-		endOffset := time.Duration(rand.Int31n(cfg.EndDeltaS))
 		fromHour := cfg.DailyBeginHour().Add(time.Second * beginOffset)
+		endOffset := time.Duration(rand.Int31n(cfg.EndDeltaS))
 		untilHour := cfg.DailyEndHour().Add(time.Second * endOffset)
 
 		//fromDate := toTime(dayCounter, fromHour)
