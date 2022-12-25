@@ -8,5 +8,6 @@
   "dailyEnd": "17:00.00",
   "beginDeltaS": 100,
   "endDeltaS": 100,
+  "pauseMinutes": 0,
   "workingDays":  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 }

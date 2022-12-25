@@ -9,16 +9,17 @@ import (
 )
 
 type Configuration struct {
-	StartId     int      `json:"startid"`
-	Userid      string   `json:"userid"`
-	ClientId    string   `json:"clientId"`
-	From        string   `json:"from"`
-	Until       string   `json:"until"`
-	DailyBegin  string   `json:"dailyBegin"`
-	DailyEnd    string   `json:"dailyEnd"`
-	BeginDeltaS int32    `json:"beginDeltaS"`
-	EndDeltaS   int32    `json:"endDeltaS"`
-	WorkingDays []string `json:"workingDays"`
+	StartId      int      `json:"startid"`
+	PauseMinutes int      `json:"pauseMinutes"`
+	Userid       string   `json:"userid"`
+	ClientId     string   `json:"clientId"`
+	From         string   `json:"from"`
+	Until        string   `json:"until"`
+	DailyBegin   string   `json:"dailyBegin"`
+	DailyEnd     string   `json:"dailyEnd"`
+	BeginDeltaS  int32    `json:"beginDeltaS"`
+	EndDeltaS    int32    `json:"endDeltaS"`
+	WorkingDays  []string `json:"workingDays"`
 }
 
 const (
@@ -185,7 +186,7 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 			dayCounter.Format("2006-01-02 Monday"),
 			fromDate.Format(time.RFC822),
 			untilDate.Format(time.RFC822))
-		statement := valuesStatement(rowId, cfg.Userid, cfg.ClientId, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
+		statement := valuesStatement(rowId, cfg.Userid, cfg.ClientId, cfg.PauseMinutes, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
 		if withComment {
 			_, err = writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
 		} else {
@@ -199,11 +200,11 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	return nil
 }
 
-func valuesStatement(rowId int, userid string, clientId string, fromEpoch int64, untilEpoch int64, epochCurrentDay int64, lastStatement bool) string {
-
+func valuesStatement(rowId int, userid string, clientId string, pause int, fromEpoch int64, untilEpoch int64, epochCurrentDay int64, lastStatement bool) string {
 	sub := time.Unix(untilEpoch, 0).Sub(time.Unix(fromEpoch, 0))
-
-	worktime := fmt.Sprintf("%s", fmtDuration(sub))
+	pauseDuration := time.Duration(pause) * time.Minute
+	//sub = time.Unix(int64(sub.Minutes()), 0).Sub(time.Duration(pause))
+	worktime := fmt.Sprintf("%s", fmtDuration(sub, pauseDuration))
 	//time.Date(2023, 01, 01, sub.Hours(), sub.Minutes(), 0, 0, time.UTC)
 	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', %s, 0, 1, 'Arbeitszeit', 0, 0, 1, 0, 0)",
 		rowId,           // ID
@@ -228,7 +229,8 @@ func toTime(theDay time.Time, theHour time.Time) time.Time {
 	return date
 }
 
-func fmtDuration(duration time.Duration) string {
+func fmtDuration(duration time.Duration, pause time.Duration) string {
+	duration = duration - pause
 	duration = duration.Round(time.Minute)
 	h := duration / time.Hour
 	duration -= h * time.Hour
