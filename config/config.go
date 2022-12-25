@@ -11,6 +11,7 @@ import (
 type Configuration struct {
 	StartId     int      `json:"startid"`
 	Userid      string   `json:"userid"`
+	ClientId    string   `json:"clientId"`
 	From        string   `json:"from"`
 	Until       string   `json:"until"`
 	DailyBegin  string   `json:"dailyBegin"`
@@ -184,7 +185,7 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 			dayCounter.Format("2006-01-02 Monday"),
 			fromDate.Format(time.RFC822),
 			untilDate.Format(time.RFC822))
-		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
+		statement := valuesStatement(rowId, cfg.Userid, cfg.ClientId, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
 		if withComment {
 			_, err = writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
 		} else {
@@ -198,13 +199,13 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	return nil
 }
 
-func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64, epochCurrentDay int64, lastStatement bool) string {
+func valuesStatement(rowId int, userid string, clientId string, fromEpoch int64, untilEpoch int64, epochCurrentDay int64, lastStatement bool) string {
 
 	sub := time.Unix(untilEpoch, 0).Sub(time.Unix(fromEpoch, 0))
 
 	worktime := fmt.Sprintf("%s", fmtDuration(sub))
 	//time.Date(2023, 01, 01, sub.Hours(), sub.Minutes(), 0, 0, time.UTC)
-	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', 1, 0, 1, 'Arbeitszeit', 0, 0, 1, 0, 0)",
+	sprintf := fmt.Sprintf("(%d, %d, 0, %d, %s, %d, %d, %d, '%s', %s, 0, 1, 'Arbeitszeit', 0, 0, 1, 0, 0)",
 		rowId,           // ID
 		fromEpoch,       // crdate
 		untilEpoch,      // modified
@@ -213,6 +214,7 @@ func valuesStatement(rowId int, userid string, fromEpoch int64, untilEpoch int64
 		fromEpoch,       // Starttime
 		untilEpoch,      // endtime
 		worktime,
+		clientId,
 	)
 
 	if lastStatement {
