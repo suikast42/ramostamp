@@ -6,5 +6,6 @@
   "dailyBegin": "08:00.00",
   "dailyEnd": "17:00.00",
   "beginDeltaS": 100,
-  "endDeltaS": 100
+  "endDeltaS": 100,
+  "workingDays":  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 }

@@ -9,14 +9,15 @@ import (
 )
 
 type Configuration struct {
-	StartId     int    `json:"startid"`
-	Userid      string `json:"userid"`
-	From        string `json:"from"`
-	Until       string `json:"until"`
-	DailyBegin  string `json:"dailyBegin"`
-	DailyEnd    string `json:"dailyEnd"`
-	BeginDeltaS int32  `json:"beginDeltaS"`
-	EndDeltaS   int32  `json:"endDeltaS"`
+	StartId     int      `json:"startid"`
+	Userid      string   `json:"userid"`
+	From        string   `json:"from"`
+	Until       string   `json:"until"`
+	DailyBegin  string   `json:"dailyBegin"`
+	DailyEnd    string   `json:"dailyEnd"`
+	BeginDeltaS int32    `json:"beginDeltaS"`
+	EndDeltaS   int32    `json:"endDeltaS"`
+	WorkingDays []string `json:"workingDays"`
 }
 
 const (
@@ -64,6 +65,16 @@ func (cfg *Configuration) DailyEndHour(day time.Time) time.Time {
 	return parse.UTC()
 
 }
+
+func (cfg *Configuration) isWorkingDay(weekday time.Weekday) bool {
+	for _, day := range cfg.WorkingDays {
+		if day == weekday.String() {
+			return true
+		}
+	}
+	return false
+}
+
 func (cfg *Configuration) validate() error {
 
 	if cfg.StartId < 0 {
@@ -148,8 +159,11 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	for i := 0; i <= sub; i++ {
 		rowId := cfg.StartId + i
 		dayCounter = dayCounter.Add(time.Hour * 24)
-		if dayCounter.Weekday() == time.Saturday ||
-			dayCounter.Weekday() == time.Sunday {
+		//if dayCounter.Weekday() == time.Saturday ||
+		//	dayCounter.Weekday() == time.Sunday {
+		//	continue
+		//}
+		if !cfg.isWorkingDay(dayCounter.Weekday()) {
 			continue
 		}
 		beginOffset := time.Duration(rand.Int31n(cfg.BeginDeltaS))
