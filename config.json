@@ -1,8 +1,8 @@
 {
   "startid" : 61,
   "userid": "42",
-  "from":  "2022-10-01",
-  "until": "2022-10-31",
+  "from":  "2022-10-25",
+  "until": "2022-11-11",
   "dailyBegin": "08:00.00",
   "dailyEnd": "17:00.00",
   "beginDeltaS": 100,

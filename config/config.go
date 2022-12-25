@@ -22,6 +22,8 @@ type Configuration struct {
 const (
 	yearFormat string = "2006-01-02"
 	hourFormat string = "15:04.05"
+
+	dtzformat = "2006-01-02T15:04.05"
 )
 
 type ConfigurationError struct {
@@ -38,29 +40,27 @@ func (r *ConfigurationError) Error() string {
 }
 
 func (cfg *Configuration) FromDate() time.Time {
-	loc, _ := time.LoadLocation("Local")
-	parse, _ := time.ParseInLocation(yearFormat, cfg.From, loc)
-	return parse.UTC()
+	parse, _ := time.ParseInLocation(yearFormat, cfg.From, time.Local)
+	return parse
 
 }
 
 func (cfg *Configuration) UntilDate() time.Time {
-	loc, _ := time.LoadLocation("Local")
-	parse, _ := time.ParseInLocation(yearFormat, cfg.Until, loc)
+	parse, _ := time.ParseInLocation(yearFormat, cfg.Until, time.Local)
+	return parse
+
+}
+
+func (cfg *Configuration) DailyBeginHour(day time.Time) time.Time {
+	dayStr := day.Format(yearFormat)
+	parse, _ := time.ParseInLocation(dtzformat, dayStr+"T"+cfg.DailyBegin, time.Local)
 	return parse.UTC()
 
 }
 
-func (cfg *Configuration) DailyBeginHour() time.Time {
-	loc, _ := time.LoadLocation("Local")
-	parse, _ := time.ParseInLocation(hourFormat, cfg.DailyBegin, loc)
-	return parse.UTC()
-
-}
-
-func (cfg *Configuration) DailyEndHour() time.Time {
-	loc, _ := time.LoadLocation("Local")
-	parse, _ := time.ParseInLocation(hourFormat, cfg.DailyEnd, loc)
+func (cfg *Configuration) DailyEndHour(day time.Time) time.Time {
+	dayStr := day.Format(yearFormat)
+	parse, _ := time.ParseInLocation(dtzformat, dayStr+"T"+cfg.DailyEnd, time.Local)
 	return parse.UTC()
 
 }
@@ -118,12 +118,12 @@ func (cfg *Configuration) validate() error {
 		}
 	}
 
-	if cfg.DailyBeginHour().After(cfg.DailyEndHour()) {
-		return &ConfigurationError{
-			Code: 1,
-			Msg:  fmt.Sprintf("Daily begin after daily end. %v is can't be after %v", cfg.DailyBeginHour(), cfg.DailyEndHour()),
-		}
-	}
+	//if cfg.DailyBeginHour().After(cfg.DailyEndHour()) {
+	//	return &ConfigurationError{
+	//		Code: 1,
+	//		Msg:  fmt.Sprintf("Daily begin after daily end. %v is can't be after %v", cfg.DailyBeginHour(), cfg.DailyEndHour()),
+	//	}
+	//}
 
 	return nil
 }
@@ -148,14 +148,14 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 	for i := 0; i <= sub; i++ {
 		rowId := cfg.StartId + i
 		dayCounter = dayCounter.Add(time.Hour * 24)
-		if dayCounter.Weekday() == time.Friday ||
-			dayCounter.Weekday() == time.Saturday {
+		if dayCounter.Weekday() == time.Saturday ||
+			dayCounter.Weekday() == time.Sunday {
 			continue
 		}
 		beginOffset := time.Duration(rand.Int31n(cfg.BeginDeltaS))
-		fromHour := cfg.DailyBeginHour().Add(time.Second * beginOffset)
+		fromHour := cfg.DailyBeginHour(dayCounter).Add(time.Second * beginOffset)
 		endOffset := time.Duration(rand.Int31n(cfg.EndDeltaS))
-		untilHour := cfg.DailyEndHour().Add(time.Second * endOffset)
+		untilHour := cfg.DailyEndHour(dayCounter).Add(time.Second * endOffset)
 
 		//fromDate := toTime(dayCounter, fromHour)
 		//untilDate := toTime(dayCounter, untilHour)
@@ -168,8 +168,8 @@ func (cfg *Configuration) Generate(writer io.Writer, withComment bool) error {
 		untilDate := toTime(dayCounter, untilHour)
 		comment := fmt.Sprintf("Day: %v: from: %v until:%v",
 			dayCounter.Format("2006-01-02 Monday"),
-			fromDate.Format("15:04.05 MST"),
-			untilDate.Format("15:04.05 MST"))
+			fromDate.Format(time.RFC822),
+			untilDate.Format(time.RFC822))
 		statement := valuesStatement(rowId, cfg.Userid, fromDate.Unix(), untilDate.Unix(), dayCounter.Unix(), i == sub)
 		if withComment {
 			_, err = writer.Write([]byte(fmt.Sprintf("--%s\n%s\n", comment, statement)))
